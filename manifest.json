@@ -2,7 +2,7 @@
     "name": "Gpt Prompts For YouTube",
     "version": "0.1.0",
     "description": "",
-    "permissions": ["storage", "tabs", "activeTab", "webRequest", "webRequestBlocking"],
+    "permissions": ["storage", "tabs", "activeTab", "webRequest"],
     "host_permissions": ["https://*.youtube.com/*"],
     "background": {
       "service_worker": "background.js"

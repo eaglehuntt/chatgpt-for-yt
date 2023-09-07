@@ -3,20 +3,19 @@
 
   chrome.runtime.onMessage.addListener((obj, sender, response) => {
     const { type, value, videoId } = obj;
+    console.log(obj);
 
-    if (type === "NEW") {
+    if (type == "NEW") {
       currentVideo = videoId;
       activeVideo();
-    } else {
-      inactiveVideo();
     }
   });
 
   const ensureClosedCaptionsActivated = () => {
     // Select the CC button on the YouTube video player using aria-label.
-    const ccButton = document.querySelector(
-      'button[aria-label="Subtitles/closed captions keyboard shortcut c"]'
-    );
+    const ccButton = document.querySelector(".ytp-subtitles-button.ytp-button");
+
+    console.log(ccButton);
 
     // Check if the CC button exists and whether it is pressed (activated).
     if (ccButton && ccButton.getAttribute("aria-pressed") !== "true") {
@@ -26,17 +25,11 @@
       // Optional: Wait for a moment before deactivating (adjust timing as needed).
       setTimeout(() => {
         ccButton.click();
-        console.log("Closed captions activated and deactivated.");
       }, 500);
     }
   };
 
-  const inactiveVideo = () => {
-    console.log("Video is inactive!");
-  };
-
   const activeVideo = () => {
-    console.log("WORKING");
-    //ensureClosedCaptionsActivated();
+    ensureClosedCaptionsActivated();
   };
 })();
