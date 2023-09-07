@@ -1,29 +1,24 @@
-/* chrome.tabs.onUpdated.addListener((tabId, tab) => {
-  if (tab.url && tab.url.includes("youtube.com/watch")) {
-    console.log("Working - YouTube video detected:", tab.url);
-    const queryParameters = tab.url.split("?")[1];
-    const urlParameters = new URLSearchParams(queryParameters);
-    console.log(urlParameters);
+// Listen for "LOADED" message
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message.type === "LOADED") {
+    // Get the active tab information
+    await chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const tab = tabs[0];
 
-    chrome.tabs.sendMessage(tabId, {
-      type: "NEW",
-      videoId: urlParameters.get("v"),
-    });
-  }
-}); */
+      // Check if it's a YouTube video
+      if (tab.status === "complete" && tab.url.includes("youtube.com/watch")) {
+        console.log("YouTube video detected:", tab.url);
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (
-    changeInfo.status === "complete" &&
-    tab.url.includes("youtube.com/watch")
-  ) {
-    console.log("Working - YouTube video detected:", tab.url);
-    const queryParameters = tab.url.split("?")[1];
-    const urlParameters = new URLSearchParams(queryParameters);
+        // queryParameters: unique video ID after the "?" in a YouTube URL
+        const queryParameters = tab.url.split("?")[1];
+        const urlParameters = new URLSearchParams(queryParameters);
 
-    chrome.tabs.sendMessage(tabId, {
-      type: "NEW",
-      videoId: urlParameters.get("v"),
+        // Send a "NEW" message to the content script
+        chrome.tabs.sendMessage(tab.id, {
+          type: "NEW",
+          videoId: urlParameters.get("v"),
+        });
+      }
     });
   }
 });
