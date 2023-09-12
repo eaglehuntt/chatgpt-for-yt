@@ -16,15 +16,16 @@
 
       youtubeLeftControls.append(gptButton);
 
-      gptButton.addEventListener("click", () => {}); // update later
+      gptButton.addEventListener("click", () => {
+        chrome.runtime.sendMessage({
+          type: "GPT_BUTTON_CLICKED",
+        });
+      });
     }
   };
 
   if (window.location.href.includes("youtube.com/watch")) {
     addGptButton();
-    chrome.runtime.sendMessage({
-      type: "LOADED",
-    });
   }
 
   let currentVideo = "";
@@ -33,9 +34,10 @@
   chrome.runtime.onMessage.addListener((message, sender, response) => {
     const { type, videoId } = message;
 
-    if (type == "NEW") {
+    if (type == "NEW_CHAT") {
+      console.log("got new chat event");
       currentVideo = videoId;
-      activeVideo();
+      ensureClosedCaptionsActivated();
     }
   });
 
@@ -54,9 +56,5 @@
         ccButton.click();
       }, 500);
     }
-  };
-
-  const activeVideo = () => {
-    ensureClosedCaptionsActivated();
   };
 })();

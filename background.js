@@ -1,11 +1,11 @@
-// Listen for "LOADED" message
 chrome.runtime.onMessage.addListener(async (message, sender, response) => {
-  if (message.type == "LOADED") {
+  if (message.type == "GPT_BUTTON_CLICKED") {
+    console.log("gpt button clicked");
     // Get the active tab information
     await chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
 
-      // Check if it's a YouTube video
+      // Check if it's a YouTube video. Redundant checking, but better to be safe
       if (tab.status === "complete" && tab.url.includes("youtube.com/watch")) {
         console.log("YouTube video detected:", tab.url);
 
@@ -13,9 +13,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, response) => {
         const queryParameters = tab.url.split("?")[1];
         const urlParameters = new URLSearchParams(queryParameters);
 
+        console.log("sending new chat event");
         // Send a "NEW" message to the content script
         chrome.tabs.sendMessage(tab.id, {
-          type: "NEW",
+          type: "NEW_CHAT",
           videoId: urlParameters.get("v"),
         });
       }
