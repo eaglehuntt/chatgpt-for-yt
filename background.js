@@ -1,6 +1,6 @@
 // Listen for "LOADED" message
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  if (message.type === "LOADED") {
+chrome.runtime.onMessage.addListener(async (message, sender, response) => {
+  if (message.type == "LOADED") {
     // Get the active tab information
     await chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
@@ -37,6 +37,7 @@ const onTranscriptApiCall = async (details) => {
       console.error("There was an error intercepting the transcript");
       console.error(error);
     }
+    // FIX BUG. THIS STAYS REMOVED
     chrome.webRequest.onCompleted.removeListener(onTranscriptApiCall);
   }
 };

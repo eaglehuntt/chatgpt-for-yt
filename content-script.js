@@ -1,10 +1,37 @@
 (() => {
+  const addGptButton = () => {
+    const gptButtonExists = document.getElementsByClassName("gpt-button")[0];
+
+    if (!gptButtonExists) {
+      const gptButton = document.createElement("img");
+
+      gptButton.style.cursor = "pointer";
+      gptButton.src = chrome.runtime.getURL("assets/bookmark.png"); // update later
+      gptButton.className = "ytp-button" + "gpt-button";
+      gptButton.title = "Click to start ChatGPT prompt";
+
+      const youtubeLeftControls =
+        document.getElementsByClassName("ytp-left-controls")[0];
+      youtubePlayer = document.getElementsByClassName("video-stream")[0];
+
+      youtubeLeftControls.append(gptButton);
+
+      gptButton.addEventListener("click", () => {}); // update later
+    }
+  };
+
+  if (window.location.href.includes("youtube.com/watch")) {
+    addGptButton();
+    chrome.runtime.sendMessage({
+      type: "LOADED",
+    });
+  }
+
   let currentVideo = "";
 
   // Listen for a "NEW" message. This will indicate there is a new video
   chrome.runtime.onMessage.addListener((message, sender, response) => {
     const { type, videoId } = message;
-    console.log(message);
 
     if (type == "NEW") {
       currentVideo = videoId;
