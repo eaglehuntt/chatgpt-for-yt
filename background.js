@@ -1,6 +1,5 @@
 chrome.runtime.onMessage.addListener(async (message, sender, response) => {
   if (message.type == "GPT_BUTTON_CLICKED") {
-    console.log("gpt button clicked");
     // Get the active tab information
     await chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs[0];
@@ -13,7 +12,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, response) => {
         const queryParameters = tab.url.split("?")[1];
         const urlParameters = new URLSearchParams(queryParameters);
 
-        console.log("sending new chat event");
         // Send a "NEW" message to the content script
         chrome.tabs.sendMessage(tab.id, {
           type: "NEW_CHAT",
@@ -24,32 +22,26 @@ chrome.runtime.onMessage.addListener(async (message, sender, response) => {
   }
 });
 
-const onTranscriptApiCall = async (details) => {
+const interceptTranscriptApiCall = async (details) => {
   if (details.url.includes("youtube.com/api/timedtext")) {
     try {
       const response = await fetch(details.url);
       let data = await response.text();
       data = JSON.parse(data);
 
-      getTranscript(data);
+      getTranscriptFromJson(data);
 
-      console.log(`Transcript: ${getTranscript(data)}`);
+      console.log(`Transcript: ${getTranscriptFromJson(data)}`);
+      // FIX BUG. THIS STAYS REMOVED
+      chrome.webRequest.onCompleted.removeListener(interceptTranscriptApiCall);
     } catch (error) {
       console.error("There was an error intercepting the transcript");
       console.error(error);
     }
-    // FIX BUG. THIS STAYS REMOVED
-    chrome.webRequest.onCompleted.removeListener(onTranscriptApiCall);
   }
 };
 
-// Add the listener
-chrome.webRequest.onCompleted.addListener(onTranscriptApiCall, {
-  urls: ["https://www.youtube.com/api/timedtext*"], // Specify the URL patterns to intercept.
-  types: ["xmlhttprequest"], // Specify the types of requests to intercept.
-});
-
-const getTranscript = (data) => {
+const getTranscriptFromJson = (data) => {
   let transcript = "";
 
   let events = data.events;
@@ -71,3 +63,9 @@ const getTranscript = (data) => {
   transcript = transcript.trim();
   return transcript;
 };
+
+// Add the listener
+chrome.webRequest.onCompleted.addListener(interceptTranscriptApiCall, {
+  urls: ["https://www.youtube.com/api/timedtext*"], // Specify the URL patterns to intercept.
+  types: ["xmlhttprequest"], // Specify the types of requests to intercept.
+});

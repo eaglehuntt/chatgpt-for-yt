@@ -35,9 +35,9 @@
     const { type, videoId } = message;
 
     if (type == "NEW_CHAT") {
-      console.log("got new chat event");
       currentVideo = videoId;
       ensureClosedCaptionsActivated();
+      // this is where the chatbox will be generated.
     }
   });
 
