@@ -8,7 +8,7 @@
     "url": "https://github.com/lxieyang/chrome-extension-boilerplate-react.git"
   },
   "scripts": {
-    "build": "node utils/build.js",
+    "build": "rimraf build/ && node utils/build.js",
     "start": "node utils/webserver.js",
     "prettier": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,scss,md}'"
   },
@@ -45,6 +45,7 @@
     "prettier": "^2.8.3",
     "react-refresh": "^0.14.0",
     "react-refresh-typescript": "^2.0.7",
+    "rimraf": "^5.0.1",
     "sass": "^1.57.1",
     "sass-loader": "^13.2.0",
     "source-map-loader": "^3.0.1",
