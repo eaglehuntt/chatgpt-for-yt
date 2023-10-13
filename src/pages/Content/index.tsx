@@ -1,7 +1,3 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import Chatbox from './Chatbox';
-
 class ContentScript {
   private chatbox: HTMLDivElement | undefined;
   private gptButtonContainer: HTMLDivElement | undefined;
@@ -10,7 +6,6 @@ class ContentScript {
   constructor() {
     if (window.location.href.includes('youtube.com/watch')) {
       this.addGptButton();
-      this.addChatbox();
     }
 
     // NEW_CHAT Listener
@@ -19,30 +14,8 @@ class ContentScript {
 
       if (type === 'NEW_CHAT') {
         this.ensureClosedCaptionsActivated();
-
-        if (this.chatbox) {
-          this.toggleChatbox(true);
-        }
       }
     });
-  }
-
-  private addChatbox() {
-    this.chatbox = document.createElement('div');
-    this.toggleChatbox(false);
-
-    // Find the GPT button container by class name
-    if (this.gptButtonContainer) {
-      // Insert the chatbox as a sibling after the GPT button container
-      if (this.gptButtonContainer.parentNode) {
-        this.gptButtonContainer.parentNode.insertBefore(
-          this.chatbox,
-          this.gptButtonContainer.nextSibling
-        );
-      }
-    }
-
-    ReactDOM.render(<Chatbox />, this.chatbox);
   }
 
   private addGptButton() {
@@ -70,12 +43,6 @@ class ContentScript {
         });
       }
     }
-  }
-
-  private toggleChatbox(status: boolean) {
-    status
-      ? this.chatbox?.classList.remove('hidden')
-      : this.chatbox?.classList.add('hidden');
   }
 
   private ensureClosedCaptionsActivated() {
