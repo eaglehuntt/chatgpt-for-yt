@@ -1,20 +1,43 @@
 class ContentScript {
-  private chatbox: HTMLDivElement | undefined;
   private gptButtonContainer: HTMLDivElement | undefined;
   private gptButton: HTMLImageElement | undefined;
 
   constructor() {
     if (window.location.href.includes('youtube.com/watch')) {
       this.addGptButton();
+      this.addNewChatListener();
+      this.addNewTranscriptListener();
+    } else if (window.location.href.includes('chat.openai.com')) {
+      this.pasteGptPrompt();
     }
+  }
 
-    // NEW_CHAT Listener
-    chrome.runtime.onMessage.addListener((message, sender, response) => {
+  private addNewChatListener() {
+    chrome.runtime.onMessage.addListener(async (message, sender, response) => {
       const { type, videoId } = message;
-
       if (type === 'NEW_CHAT') {
-        this.ensureClosedCaptionsActivated();
+        await this.ensureClosedCaptionsActivated();
       }
+    });
+  }
+
+  private addNewTranscriptListener() {
+    chrome.runtime.onMessage.addListener((message, sender, response) => {
+      const { type, transcript } = message;
+      if (type === 'TRANSCRIPT' && transcript) {
+        console.log(transcript);
+        this.sendGptPrompt();
+      }
+    });
+  }
+
+  private pasteGptPrompt() {
+    chrome.runtime.sendMessage({ type: 'GET_TRANSCRIPT' }, (response) => {
+      const { transcript } = response;
+      const promptArea = document.getElementById(
+        'prompt-textarea'
+      ) as HTMLTextAreaElement;
+      promptArea.value = transcript;
     });
   }
 
@@ -24,7 +47,7 @@ class ContentScript {
 
     if (this.gptButton) {
       this.gptButton.style.cursor = 'pointer';
-      this.gptButton.src = chrome.runtime.getURL('../../././img-34.png'); // update later
+      this.gptButton.src = chrome.runtime.getURL('../../././icon-34.png'); // update later
       this.gptButton.className = 'ytp-button ' + 'gpt-button';
       this.gptButton.title = 'Click to start a ChatGPT prompt';
 
@@ -45,23 +68,31 @@ class ContentScript {
     }
   }
 
-  private ensureClosedCaptionsActivated() {
-    // Select the CC button on the YouTube video player using aria-label.
-    // We need to do this in order to intercept the api call.
-    const ccButton = document.querySelector(
-      '.ytp-subtitles-button.ytp-button'
-    ) as HTMLButtonElement;
+  private async ensureClosedCaptionsActivated(): Promise<void> {
+    return new Promise((resolve) => {
+      // Select the CC button on the YouTube video player using aria-label.
+      // We need to do this in order to intercept the api call.
+      const ccButton = document.querySelector(
+        '.ytp-subtitles-button.ytp-button'
+      ) as HTMLButtonElement;
 
-    // Check if the CC button exists and whether it is pressed (activated).
-    if (ccButton && ccButton.getAttribute('aria-pressed') !== 'true') {
-      // CC button is not activated, so activate and deactivate it quickly.
-      ccButton.click();
-
-      // Optional: Wait for a moment before deactivating (adjust timing as needed).
-      setTimeout(() => {
+      // Check if the CC button exists and whether it is pressed (activated).
+      if (ccButton && ccButton.getAttribute('aria-pressed') !== 'true') {
+        // CC button is not activated, so activate and deactivate it quickly.
         ccButton.click();
-      }, 500);
-    }
+
+        // Optional: Wait for a moment before deactivating (adjust timing as needed).
+        setTimeout(() => {
+          ccButton.click();
+          resolve();
+        }, 500);
+      }
+    });
+  }
+
+  private sendGptPrompt() {
+    // Open a new tab with your target URL
+    const newTab = window.open('https://chat.openai.com/', '_blank');
   }
 }
 
