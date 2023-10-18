@@ -6,9 +6,7 @@ class ContentScript {
     if (window.location.href.includes('youtube.com/watch')) {
       this.addGptButton();
       this.addNewChatListener();
-      this.addNewTranscriptListener();
-    } else if (window.location.href.includes('chat.openai.com')) {
-      this.pasteGptPrompt();
+      this.addNewGptPromptListener();
     }
   }
 
@@ -17,16 +15,20 @@ class ContentScript {
       const { type, videoId } = message;
       if (type === 'NEW_CHAT') {
         await this.ensureClosedCaptionsActivated();
+        console.log('sending safe for gpt prompt message');
+        chrome.runtime.sendMessage({ type: 'SAFE_FOR_GPT_PROMPT' });
       }
     });
   }
 
-  private addNewTranscriptListener() {
+  private addNewGptPromptListener() {
     chrome.runtime.onMessage.addListener((message, sender, response) => {
       const { type, transcript } = message;
-      if (type === 'TRANSCRIPT' && transcript) {
-        console.log(transcript);
-        this.sendGptPrompt();
+      if (type === 'GPT_PROMPT') {
+        if (transcript) {
+          console.log(transcript);
+          this.sendGptPrompt();
+        }
       }
     });
   }

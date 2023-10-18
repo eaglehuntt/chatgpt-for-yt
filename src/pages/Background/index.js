@@ -3,7 +3,7 @@ class BackgroundScript {
     this.addButtonEventListener();
     this.addTranscriptEventListener();
     this.addGetTranscriptListener();
-    //this.addClosedCaptionsListener();
+    this.addSafeForGptPromptListener();
   }
 
   addButtonEventListener() {
@@ -39,6 +39,20 @@ class BackgroundScript {
     });
   }
 
+  addSafeForGptPromptListener() {
+    chrome.runtime.onMessage.addListener((message, sender, response) => {
+      if (message.type === 'SAFE_FOR_GPT_PROMPT') {
+        console.log('got safe for gpt prompt message');
+        if (this.transcript) {
+          console.log('sending prompt message');
+          this.sendGptPromptMessage();
+        } else {
+          console.log('Error, no transcript');
+        }
+      }
+    });
+  }
+
   interceptTranscriptApiCall = async (details) => {
     if (details.url.includes('youtube.com/api/timedtext')) {
       try {
@@ -50,8 +64,10 @@ class BackgroundScript {
         let data = await response.text();
         data = JSON.parse(data);
         this.transcript = this.getTranscriptFromJson(data);
-        //quick fix change later
-        this.sendTranscriptMessage();
+        // Remove the listener to avoid intercepting multiple times
+        chrome.webRequest.onCompleted.removeListener(
+          this.interceptTranscriptApiCall
+        );
       } catch (error) {
         console.error('There was an error intercepting the transcript');
         console.error(error);
@@ -59,18 +75,14 @@ class BackgroundScript {
     }
   };
 
-  sendTranscriptMessage() {
+  sendGptPromptMessage() {
     this.getActiveTabInformation((tab) => {
       if (tab) {
-        console.log('Sending transcript message');
+        console.log('Sending gpt prompt message');
         chrome.tabs.sendMessage(tab.id, {
-          type: 'TRANSCRIPT',
+          type: 'GPT_PROMPT',
           transcript: this.transcript,
         });
-        // Remove the listener to avoid intercepting multiple times
-        chrome.webRequest.onCompleted.removeListener(
-          this.interceptTranscriptApiCall
-        );
       } else {
         console.error('No active tab found.');
       }
