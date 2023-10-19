@@ -7,6 +7,8 @@ class ContentScript {
       this.addGptButton();
       this.addNewChatListener();
       this.addNewGptPromptListener();
+    } else if (window.location.href.includes('chat.openai.com')) {
+      this.pasteGptPrompt();
     }
   }
 
@@ -15,7 +17,6 @@ class ContentScript {
       const { type, videoId } = message;
       if (type === 'NEW_CHAT') {
         await this.ensureClosedCaptionsActivated();
-        console.log('sending safe for gpt prompt message');
         chrome.runtime.sendMessage({ type: 'SAFE_FOR_GPT_PROMPT' });
       }
     });
@@ -26,7 +27,6 @@ class ContentScript {
       const { type, transcript } = message;
       if (type === 'GPT_PROMPT') {
         if (transcript) {
-          console.log(transcript);
           this.sendGptPrompt();
         }
       }
@@ -35,11 +35,16 @@ class ContentScript {
 
   private pasteGptPrompt() {
     chrome.runtime.sendMessage({ type: 'GET_TRANSCRIPT' }, (response) => {
-      const { transcript } = response;
       const promptArea = document.getElementById(
         'prompt-textarea'
       ) as HTMLTextAreaElement;
-      promptArea.value = transcript;
+
+      if (promptArea) {
+        setTimeout(() => {
+          promptArea.value = response;
+          chrome.runtime.sendMessage({ type: 'CLEAR_TRANSCRIPT' });
+        }, 3000);
+      }
     });
   }
 
@@ -49,9 +54,9 @@ class ContentScript {
 
     if (this.gptButton) {
       this.gptButton.style.cursor = 'pointer';
-      this.gptButton.src = chrome.runtime.getURL('../../././icon-34.png'); // update later
+      this.gptButton.src = chrome.runtime.getURL('icon-34.png'); // update later
       this.gptButton.className = 'ytp-button ' + 'gpt-button';
-      this.gptButton.title = 'Click to start a ChatGPT prompt';
+      this.gptButton.title = 'Start a ChatGPT prompt';
 
       this.gptButtonContainer.appendChild(this.gptButton);
 

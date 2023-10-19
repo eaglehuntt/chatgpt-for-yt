@@ -1,11 +1,11 @@
 {
-  "name": "chrome-extension-boilerplate-react",
-  "version": "5.0.4",
-  "description": "A chrome extension boilerplate built with React 18, Webpack 5, and Webpack Dev Server 4",
+  "name": "chatgpt-for-youtube",
+  "version": "1.0.0",
+  "description": "A chrome extension to use chatgpt for youtube videos",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/lxieyang/chrome-extension-boilerplate-react.git"
+    "url": "https://github.com/eaglehuntt/chatgpt-for-yt"
   },
   "scripts": {
     "build": "rimraf build/ && node utils/build.js",

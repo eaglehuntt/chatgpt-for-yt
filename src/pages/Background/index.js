@@ -4,16 +4,15 @@ class BackgroundScript {
     this.addTranscriptEventListener();
     this.addGetTranscriptListener();
     this.addSafeForGptPromptListener();
+    this.addClearTranscriptListener();
   }
 
   addButtonEventListener() {
     chrome.runtime.onMessage.addListener(async (message, sender, response) => {
       if (message.type === 'GPT_BUTTON_CLICKED') {
-        console.log('Got button clicked message');
         this.getActiveTabInformation((tab) => {
           if (this.isYouTubeVideo(tab)) {
             const queryParameters = new URLSearchParams(tab.url.split('?')[1]);
-            console.log('Sending new chat message');
             chrome.tabs.sendMessage(tab.id, {
               type: 'NEW_CHAT',
               videoId: queryParameters.get('v'),
@@ -42,9 +41,7 @@ class BackgroundScript {
   addSafeForGptPromptListener() {
     chrome.runtime.onMessage.addListener((message, sender, response) => {
       if (message.type === 'SAFE_FOR_GPT_PROMPT') {
-        console.log('got safe for gpt prompt message');
         if (this.transcript) {
-          console.log('sending prompt message');
           this.sendGptPromptMessage();
         } else {
           console.log('Error, no transcript');
@@ -53,10 +50,18 @@ class BackgroundScript {
     });
   }
 
+  addClearTranscriptListener() {
+    chrome.runtime.onMessage.addListener((message, sender, response) => {
+      if (message.type === 'CLEAR_TRANSCRIPT') {
+        this.transcript = '';
+        this.addTranscriptEventListener();
+      }
+    });
+  }
+
   interceptTranscriptApiCall = async (details) => {
     if (details.url.includes('youtube.com/api/timedtext')) {
       try {
-        console.log('Running interception');
         const response = await fetch(details.url);
         if (!response.ok) {
           throw new Error('Fetch failed with status ' + response.status);
@@ -78,7 +83,6 @@ class BackgroundScript {
   sendGptPromptMessage() {
     this.getActiveTabInformation((tab) => {
       if (tab) {
-        console.log('Sending gpt prompt message');
         chrome.tabs.sendMessage(tab.id, {
           type: 'GPT_PROMPT',
           transcript: this.transcript,
