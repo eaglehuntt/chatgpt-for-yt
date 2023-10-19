@@ -1,14 +1,36 @@
 class ContentScript {
   private gptButtonContainer: HTMLDivElement | undefined;
   private gptButton: HTMLImageElement | undefined;
+  private currentUrl: string | undefined;
 
   constructor() {
-    if (window.location.href.includes('youtube.com/watch')) {
+    this.addNewChatListener();
+    this.addNewGptPromptListener();
+    this.currentUrl = window.location.href;
+    this.initializeContentScript();
+
+    // Poll the URL for changes every 500 milliseconds (adjust the interval as needed)
+    setInterval(() => {
+      this.checkUrlChange();
+    }, 500);
+  }
+
+  private initializeContentScript() {
+    setTimeout(() => {
       this.addGptButton();
-      this.addNewChatListener();
-      this.addNewGptPromptListener();
+    }, 3000);
+    if (window.location.href !== this.currentUrl) {
+      this.currentUrl = window.location.href;
     } else if (window.location.href.includes('chat.openai.com')) {
-      this.pasteGptPrompt();
+      chrome.runtime.sendMessage({ type: 'GET_TRANSCRIPT' }, (response) => {
+        this.pasteGptPrompt();
+      });
+    }
+  }
+
+  private checkUrlChange() {
+    if (window.location.href !== this.currentUrl) {
+      this.initializeContentScript();
     }
   }
 
@@ -49,19 +71,22 @@ class ContentScript {
   }
 
   private addGptButton() {
-    this.gptButtonContainer = document.createElement('div');
-    this.gptButton = document.createElement('img');
+    if (!this.gptButtonContainer) {
+      this.gptButtonContainer = document.createElement('div');
+    }
 
-    if (this.gptButton) {
+    if (!this.gptButton) {
+      this.gptButton = document.createElement('img');
       this.gptButton.style.cursor = 'pointer';
-      this.gptButton.src = chrome.runtime.getURL('icon-34.png'); // update later
+      this.gptButton.src = chrome.runtime.getURL('icon-34.png'); // Update the image URL
       this.gptButton.className = 'ytp-button ' + 'gpt-button';
       this.gptButton.title = 'Start a ChatGPT prompt';
+    }
 
+    if (!this.gptButtonContainer.contains(this.gptButton)) {
       this.gptButtonContainer.appendChild(this.gptButton);
 
-      const youtubeLeftControls =
-        document.getElementsByClassName('ytp-left-controls')[0];
+      const youtubeLeftControls = document.querySelector('.ytp-left-controls');
 
       if (youtubeLeftControls) {
         youtubeLeftControls.appendChild(this.gptButtonContainer);
