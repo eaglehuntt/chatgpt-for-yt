@@ -1,13 +1,40 @@
+/*
+ContentScirpt workflow:
+
+  1. When the CS is initialized, a GPT button is created and appends itself to the YouTube toolbar. 
+  
+  2. The CS polls the current tab's URL every 500ms to check if the URL has changed. If so reinitialize the object. The functions are designed in a a way that the CS will not have unexpected behavior (ideally). 
+
+  3. [ GPT_BUTTON_CLICKED ] : Sent when user clicks the GPT button.
+
+  4. [ CLICK_CC_BUTTON ] : Received from BGS.
+
+  5. CS automatically clicks the Closed Captions button in the YouTube toolbar. This causes YouTube to fetch the transcript from the API.
+  
+  6. [ SAFE_FOR_GPT_PROMPT ] : Sent to BGS after we can ensure that YouTube has sent the transcript API request.
+
+  7. [ NEW_GPT_PROMPT ] : Received from BGS once it has parsed the transcript JSON and has it as a string
+
+  8. [ GET_TRANSCRIPT ] : Sent to BGS and waits for its response. 
+  
+  9. Goes to ChatGPT and pastes the response string into the chatbar.
+
+TODO: 
+  - Refactor initializeContentScript, GET_TRANSCRIPT is being called twice
+  - Bug: Sometimes GPT button does not show up in toolbar
+*/
+
 class ContentScript {
   private gptButtonContainer: HTMLDivElement | undefined;
   private gptButton: HTMLImageElement | undefined;
   private currentUrl: string | undefined;
 
   constructor() {
-    this.addNewChatListener();
+    this.addClickCCButtonListener();
     this.addNewGptPromptListener();
+
     this.currentUrl = window.location.href;
-    this.initializeContentScript();
+    this.setAction();
 
     // Poll the URL for changes every 500 milliseconds (adjust the interval as needed)
     setInterval(() => {
@@ -15,10 +42,13 @@ class ContentScript {
     }, 500);
   }
 
-  private initializeContentScript() {
+  private setAction() {
+    // Refactor
+
     setTimeout(() => {
       this.addGptButton();
     }, 3000);
+
     if (window.location.href !== this.currentUrl) {
       this.currentUrl = window.location.href;
     } else if (window.location.href.includes('chat.openai.com')) {
@@ -30,14 +60,14 @@ class ContentScript {
 
   private checkUrlChange() {
     if (window.location.href !== this.currentUrl) {
-      this.initializeContentScript();
+      this.setAction();
     }
   }
 
-  private addNewChatListener() {
+  private addClickCCButtonListener() {
     chrome.runtime.onMessage.addListener(async (message, sender, response) => {
       const { type, videoId } = message;
-      if (type === 'NEW_CHAT') {
+      if (type === 'CLICK_CC_BUTTON') {
         await this.ensureClosedCaptionsActivated();
         chrome.runtime.sendMessage({ type: 'SAFE_FOR_GPT_PROMPT' });
       }
@@ -47,7 +77,7 @@ class ContentScript {
   private addNewGptPromptListener() {
     chrome.runtime.onMessage.addListener((message, sender, response) => {
       const { type, transcript } = message;
-      if (type === 'GPT_PROMPT') {
+      if (type === 'NEW_GPT_PROMPT') {
         if (transcript) {
           this.sendGptPrompt();
         }

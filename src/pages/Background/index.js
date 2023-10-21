@@ -1,3 +1,9 @@
+/*
+TODO: 
+- Use videoId as a value to look for when intercepting the transcript
+- Refactor to TSX
+*/
+
 class BackgroundScript {
   constructor() {
     this.addButtonEventListener();
@@ -14,7 +20,7 @@ class BackgroundScript {
           if (this.isYouTubeVideo(tab)) {
             const queryParameters = new URLSearchParams(tab.url.split('?')[1]);
             chrome.tabs.sendMessage(tab.id, {
-              type: 'NEW_CHAT',
+              type: 'CLICK_CC_BUTTON',
               videoId: queryParameters.get('v'),
             });
           }
@@ -42,7 +48,7 @@ class BackgroundScript {
     chrome.runtime.onMessage.addListener((message, sender, response) => {
       if (message.type === 'SAFE_FOR_GPT_PROMPT') {
         if (this.transcript) {
-          this.sendGptPromptMessage();
+          this.sendNewGptPromptMessage();
         } else {
           console.log('Error, no transcript');
         }
@@ -80,11 +86,11 @@ class BackgroundScript {
     }
   };
 
-  sendGptPromptMessage() {
+  sendNewGptPromptMessage() {
     this.getActiveTabInformation((tab) => {
       if (tab) {
         chrome.tabs.sendMessage(tab.id, {
-          type: 'GPT_PROMPT',
+          type: 'NEW_GPT_PROMPT',
           transcript: this.transcript,
         });
       } else {
