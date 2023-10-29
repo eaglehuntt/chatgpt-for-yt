@@ -1,6 +1,6 @@
 /*
 TODO: 
-- Use videoId as a value to look for when intercepting the transcript
+- Use videoId as a value to look for when intercepting the transcript (bug fix)
 - Refactor to TSX
 */
 
