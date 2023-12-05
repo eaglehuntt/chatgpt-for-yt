@@ -23,6 +23,7 @@ TODO:
   - Refactor initializeContentScript, GET_TRANSCRIPT is being called twice
   - Bug: Sometimes GPT button does not show up in toolbar
   - expand chatgpt chatbar? (bug?)
+  
 */
 
 class ContentScript {
